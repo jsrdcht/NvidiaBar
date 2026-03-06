@@ -2,7 +2,11 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var store: GPUStatusStore
-    @Binding var appTheme: AppTheme
+    @ObservedObject var themeController: ThemeController
+
+    private var appTheme: AppTheme {
+        themeController.appTheme
+    }
 
     var body: some View {
         ScrollView {
@@ -39,6 +43,7 @@ struct SettingsView: View {
                 endPoint: .bottomTrailing
             )
         )
+        .appTheme(appTheme)
     }
 
     private var header: some View {
@@ -61,7 +66,7 @@ struct SettingsView: View {
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(appTheme.palette.tertiaryText)
 
-                    Picker("Theme", selection: $appTheme) {
+                    Picker("Theme", selection: themeController.binding) {
                         ForEach(AppTheme.allCases) { theme in
                             Text(theme.displayName)
                                 .tag(theme)

@@ -4,7 +4,11 @@ import SwiftUI
 struct DashboardView: View {
     @Environment(\.openWindow) private var openWindow
     @ObservedObject var store: GPUStatusStore
-    let appTheme: AppTheme
+    @ObservedObject var themeController: ThemeController
+
+    private var appTheme: AppTheme {
+        themeController.appTheme
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -33,6 +37,7 @@ struct DashboardView: View {
                 endPoint: .bottomTrailing
             )
         )
+        .appTheme(appTheme)
         .onAppear {
             Task {
                 await store.refreshIfNeeded(maximumAge: 300)

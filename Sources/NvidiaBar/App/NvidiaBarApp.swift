@@ -21,20 +21,16 @@ struct NvidiaBarApp: App {
 
     var body: some Scene {
         MenuBarExtra {
-            DashboardView(store: store, appTheme: themeController.appTheme)
+            DashboardView(store: store, themeController: themeController)
                 .frame(width: 440, height: 620)
-                .appTheme(themeController.appTheme)
-                .id("dashboard-\(themeController.appTheme.rawValue)")
         } label: {
             MenuBarStatusView(summary: store.summary, isRefreshing: store.isRefreshing)
         }
         .menuBarExtraStyle(.window)
 
         Window("Settings", id: AppWindowID.settings) {
-            SettingsView(store: store, appTheme: themeController.binding)
+            SettingsView(store: store, themeController: themeController)
                 .frame(minWidth: 640, minHeight: 420)
-                .appTheme(themeController.appTheme)
-                .id("settings-\(themeController.appTheme.rawValue)")
         }
     }
 }
