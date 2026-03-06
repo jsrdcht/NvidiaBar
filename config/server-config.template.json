@@ -2,14 +2,26 @@
   {
     "id": "00000000-0000-0000-0000-000000000001",
     "name": "GPU Server 1",
+    "connectionMode": "sshAlias",
     "hostAlias": "gpu-server-1",
+    "hostName": "",
+    "userName": "",
+    "port": 22,
+    "identityFile": "",
+    "password": "",
     "isEnabled": true,
     "pollIntervalMinutes": 30
   },
   {
     "id": "00000000-0000-0000-0000-000000000002",
     "name": "GPU Server 2",
-    "hostAlias": "gpu-server-2",
+    "connectionMode": "direct",
+    "hostAlias": "",
+    "hostName": "192.168.1.20",
+    "userName": "gpu-user",
+    "port": 22,
+    "identityFile": "~/.ssh/id_ed25519",
+    "password": "",
     "isEnabled": true,
     "pollIntervalMinutes": 30
   }

@@ -11,6 +11,7 @@ MACOS_DIR="$CONTENTS_DIR/MacOS"
 SDK_PATH="$(xcrun --sdk macosx --show-sdk-path)"
 APP_VERSION="${APP_VERSION:-0.1.0}"
 APP_BUILD="${APP_BUILD:-1}"
+APP_BUNDLE_ID="${APP_BUNDLE_ID:-io.github.nvidiabar.app}"
 
 mkdir -p "$BUILD_DIR"
 rm -rf "$APP_DIR"
@@ -34,7 +35,7 @@ cat > "$CONTENTS_DIR/Info.plist" <<EOF
     <key>CFBundleExecutable</key>
     <string>NvidiaBar</string>
     <key>CFBundleIdentifier</key>
-    <string>io.github.nvidiabar.app</string>
+    <string>${APP_BUNDLE_ID}</string>
     <key>CFBundleInfoDictionaryVersion</key>
     <string>6.0</string>
     <key>CFBundleName</key>

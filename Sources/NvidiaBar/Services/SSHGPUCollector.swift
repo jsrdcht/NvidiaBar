@@ -7,29 +7,27 @@ protocol GPUCollecting {
 struct SSHGPUCollector: GPUCollecting {
     private let runner: CommandRunning
     private let parser: NvidiaSMIParser
+    private let invocationBuilder: SSHInvocationBuilder
 
     init(
         runner: CommandRunning = ProcessCommandRunner(),
-        parser: NvidiaSMIParser = NvidiaSMIParser()
+        parser: NvidiaSMIParser = NvidiaSMIParser(),
+        invocationBuilder: SSHInvocationBuilder = SSHInvocationBuilder()
     ) {
         self.runner = runner
         self.parser = parser
+        self.invocationBuilder = invocationBuilder
     }
 
     func fetchSnapshot(for config: ServerConfig) async -> ServerSnapshot {
         let command = "nvidia-smi --query-gpu=index,name,utilization.gpu,utilization.memory,memory.used,memory.total,temperature.gpu --format=csv,noheader,nounits"
 
         do {
+            let invocation = try invocationBuilder.build(for: config, remoteCommand: command)
             let result = try await runner.run(
-                executablePath: "/usr/bin/env",
-                arguments: [
-                    "ssh",
-                    "-o", "BatchMode=yes",
-                    "-o", "ConnectTimeout=10",
-                    config.hostAlias,
-                    command
-                ],
-                timeout: 15
+                executablePath: invocation.executablePath,
+                arguments: invocation.arguments,
+                timeout: invocationBuilder.timeout
             )
 
             guard result.exitCode == 0 else {

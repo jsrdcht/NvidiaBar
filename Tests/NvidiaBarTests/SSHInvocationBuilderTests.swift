@@ -1,0 +1,48 @@
+import XCTest
+@testable import NvidiaBar
+
+final class SSHInvocationBuilderTests: XCTestCase {
+    func testAliasModeUsesBatchSSH() throws {
+        let config = ServerConfig(
+            name: "Alias",
+            connectionMode: .sshAlias,
+            hostAlias: "shiyanshi1",
+            isEnabled: true,
+            pollIntervalMinutes: 30
+        )
+
+        let invocation = try SSHInvocationBuilder(timeout: 12).build(for: config, remoteCommand: "nvidia-smi")
+
+        XCTAssertEqual(invocation.executablePath, "/usr/bin/env")
+        XCTAssertEqual(invocation.arguments.prefix(5), ["ssh", "-o", "ConnectTimeout=12", "-o", "BatchMode=yes"])
+        XCTAssertEqual(invocation.arguments[5], "shiyanshi1")
+        XCTAssertEqual(invocation.arguments.last, "nvidia-smi")
+    }
+
+    func testDirectModeWithPasswordUsesExpect() throws {
+        let config = ServerConfig(
+            name: "Direct",
+            connectionMode: .direct,
+            hostAlias: "",
+            hostName: "172.18.1.243",
+            userName: "ct",
+            port: 2222,
+            identityFile: "~/.ssh/id_rsa",
+            password: "secret",
+            isEnabled: true,
+            pollIntervalMinutes: 30
+        )
+
+        let invocation = try SSHInvocationBuilder(timeout: 15).build(for: config, remoteCommand: "nvidia-smi")
+
+        XCTAssertEqual(invocation.executablePath, "/usr/bin/expect")
+        XCTAssertEqual(invocation.arguments[0], "-c")
+        XCTAssertEqual(invocation.arguments[2], "--")
+        XCTAssertEqual(invocation.arguments[3], "secret")
+        XCTAssertTrue(invocation.arguments.contains("-p"))
+        XCTAssertTrue(invocation.arguments.contains("2222"))
+        XCTAssertTrue(invocation.arguments.contains("-i"))
+        XCTAssertTrue(invocation.arguments.contains("\(FileManager.default.homeDirectoryForCurrentUser.path)/.ssh/id_rsa"))
+        XCTAssertTrue(invocation.arguments.contains("ct@172.18.1.243"))
+    }
+}

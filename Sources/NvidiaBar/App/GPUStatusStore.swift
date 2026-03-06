@@ -77,7 +77,7 @@ final class GPUStatusStore: ObservableObject {
     }
 
     func restoreDefaults() {
-        configs = ServerConfig.defaults
+        configs = configStore.defaultConfigs()
         snapshotsByServerID = [:]
         seedPlaceholders()
         refreshNow()
@@ -86,18 +86,43 @@ final class GPUStatusStore: ObservableObject {
     func addServer() {
         configs.append(
             ServerConfig(
-                name: "GPU Server",
-                hostAlias: "server-alias",
+                name: "新服务器",
+                connectionMode: .direct,
+                hostAlias: "",
+                hostName: "",
+                userName: "",
+                port: 22,
+                identityFile: "",
+                password: "",
                 isEnabled: true,
                 pollIntervalMinutes: 30
             )
         )
     }
 
+    func importAvailableServers() {
+        let discovered = configStore.defaultConfigs()
+        guard !discovered.isEmpty else { return }
+
+        var merged = configs
+        let existingKeys = Set(configs.map { $0.connectionIdentityKey() })
+
+        for config in discovered where !existingKeys.contains(config.connectionIdentityKey()) {
+            merged.append(config)
+        }
+
+        configs = merged
+    }
+
     func deleteServers(at offsets: IndexSet) {
         let ids = offsets.map { configs[$0].id }
         configs.remove(atOffsets: offsets)
         ids.forEach { snapshotsByServerID.removeValue(forKey: $0) }
+    }
+
+    func deleteServer(id: UUID) {
+        guard let index = configs.firstIndex(where: { $0.id == id }) else { return }
+        deleteServers(at: IndexSet(integer: index))
     }
 
     private func refresh(force: Bool) async {

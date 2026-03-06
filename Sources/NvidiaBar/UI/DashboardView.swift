@@ -184,7 +184,7 @@ private struct EmptyStateView: View {
                 .font(.system(size: 18, weight: .bold, design: .rounded))
                 .foregroundStyle(appTheme.palette.primaryText)
 
-            Text("Open Settings and add your SSH host alias. The open-source build does not ship with any personal server addresses, keys, or passwords.")
+            Text("Open Settings and add an SSH alias or a direct host connection. The open-source build does not ship with any personal server addresses, keys, or passwords.")
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .foregroundStyle(appTheme.palette.secondaryText)
 
@@ -214,11 +214,11 @@ private struct ServerCardView: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .firstTextBaseline) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(config.name)
+                    Text(config.displayName)
                         .font(.system(size: 16, weight: .bold, design: .rounded))
                         .foregroundStyle(appTheme.palette.primaryText)
 
-                    Text(config.hostAlias)
+                    Text(config.connectionSummary)
                         .font(.system(size: 11, weight: .medium, design: .monospaced))
                         .foregroundStyle(appTheme.palette.tertiaryText)
                 }

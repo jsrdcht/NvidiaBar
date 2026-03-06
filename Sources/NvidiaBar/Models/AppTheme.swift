@@ -1,3 +1,6 @@
+#if canImport(AppKit)
+import AppKit
+#endif
 import SwiftUI
 
 enum AppTheme: String, CaseIterable, Identifiable {
@@ -26,6 +29,17 @@ enum AppTheme: String, CaseIterable, Identifiable {
             return .dark
         }
     }
+
+#if canImport(AppKit)
+    var appearanceName: NSAppearance.Name {
+        switch self {
+        case .light:
+            return .aqua
+        case .dark:
+            return .darkAqua
+        }
+    }
+#endif
 
     var palette: ThemePalette {
         switch self {
@@ -77,3 +91,54 @@ struct ThemePalette {
     let secondaryControlFill: Color
     let secondaryControlStroke: Color
 }
+
+extension View {
+    func appTheme(_ appTheme: AppTheme) -> some View {
+        modifier(AppThemeModifier(appTheme: appTheme))
+    }
+}
+
+private struct AppThemeModifier: ViewModifier {
+    let appTheme: AppTheme
+
+    func body(content: Content) -> some View {
+        content
+            .environment(\.colorScheme, appTheme.colorScheme)
+            .preferredColorScheme(appTheme.colorScheme)
+            .overlay {
+                ThemeAppearanceBridge(appTheme: appTheme)
+                    .frame(width: 0, height: 0)
+            }
+    }
+}
+
+#if canImport(AppKit)
+private struct ThemeAppearanceBridge: NSViewRepresentable {
+    let appTheme: AppTheme
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        applyAppearance(to: view)
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        applyAppearance(to: nsView)
+    }
+
+    private func applyAppearance(to nsView: NSView) {
+        let appearance = NSAppearance(named: appTheme.appearanceName)
+        nsView.appearance = appearance
+        nsView.window?.appearance = appearance
+        NSApp.appearance = appearance
+    }
+}
+#else
+private struct ThemeAppearanceBridge: View {
+    let appTheme: AppTheme
+
+    var body: some View {
+        EmptyView()
+    }
+}
+#endif
