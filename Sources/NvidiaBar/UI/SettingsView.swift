@@ -13,12 +13,15 @@ struct SettingsView: View {
                     emptyState
                 } else {
                     VStack(spacing: 12) {
-                        ForEach($store.configs) { $config in
+                        ForEach(store.configs) { config in
                             ServerEditorCard(
-                                config: $config,
+                                config: binding(for: config),
                                 appTheme: appTheme,
                                 onDelete: {
-                                    store.deleteServer(id: config.id)
+                                    let id = config.id
+                                    DispatchQueue.main.async {
+                                        store.deleteServer(id: id)
+                                    }
                                 }
                             )
                         }
@@ -124,6 +127,18 @@ struct SettingsView: View {
             .font(.system(size: 12, weight: .medium, design: .rounded))
             .foregroundStyle(appTheme.palette.secondaryText)
             .padding(.horizontal, 4)
+    }
+
+    private func binding(for config: ServerConfig) -> Binding<ServerConfig> {
+        Binding(
+            get: {
+                store.configs.first(where: { $0.id == config.id }) ?? config
+            },
+            set: { updatedConfig in
+                guard let index = store.configs.firstIndex(where: { $0.id == updatedConfig.id }) else { return }
+                store.configs[index] = updatedConfig
+            }
+        )
     }
 }
 
