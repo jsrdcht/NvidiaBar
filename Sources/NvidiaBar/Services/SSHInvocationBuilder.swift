@@ -1,8 +1,26 @@
 import Foundation
 
-struct SSHInvocation: Equatable {
+struct SSHInvocation {
     let executablePath: String
     let arguments: [String]
+    let cleanupURLs: [URL]
+
+    init(
+        executablePath: String,
+        arguments: [String],
+        cleanupURLs: [URL] = []
+    ) {
+        self.executablePath = executablePath
+        self.arguments = arguments
+        self.cleanupURLs = cleanupURLs
+    }
+
+    func cleanup() {
+        let fileManager = FileManager.default
+        for url in cleanupURLs {
+            try? fileManager.removeItem(at: url)
+        }
+    }
 }
 
 struct SSHInvocationBuilder {
@@ -26,9 +44,11 @@ struct SSHInvocationBuilder {
 
     private func buildPasswordInvocation(for config: ServerConfig, remoteCommand: String) throws -> SSHInvocation {
         let sshArguments = try buildSSHArguments(for: config, remoteCommand: remoteCommand, batchMode: false)
+        let scriptURL = try writeExpectScript()
         return SSHInvocation(
             executablePath: "/usr/bin/expect",
-            arguments: ["-c", expectScript, "--", config.trimmedPassword] + sshArguments
+            arguments: [scriptURL.path, config.trimmedPassword] + sshArguments,
+            cleanupURLs: [scriptURL]
         )
     }
 
@@ -84,5 +104,12 @@ struct SSHInvocationBuilder {
         set exitCode [lindex $result 3]
         exit $exitCode
         """
+    }
+
+    private func writeExpectScript() throws -> URL {
+        let fileManager = FileManager.default
+        let scriptURL = fileManager.temporaryDirectory.appendingPathComponent("NvidiaBarExpect-\(UUID().uuidString).exp")
+        try expectScript.write(to: scriptURL, atomically: true, encoding: .utf8)
+        return scriptURL
     }
 }

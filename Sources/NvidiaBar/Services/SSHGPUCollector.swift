@@ -24,6 +24,9 @@ struct SSHGPUCollector: GPUCollecting {
 
         do {
             let invocation = try invocationBuilder.build(for: config, remoteCommand: command)
+            defer {
+                invocation.cleanup()
+            }
             let result = try await runner.run(
                 executablePath: invocation.executablePath,
                 arguments: invocation.arguments,

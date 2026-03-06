@@ -34,11 +34,13 @@ final class SSHInvocationBuilderTests: XCTestCase {
         )
 
         let invocation = try SSHInvocationBuilder(timeout: 15).build(for: config, remoteCommand: "nvidia-smi")
+        defer {
+            invocation.cleanup()
+        }
 
         XCTAssertEqual(invocation.executablePath, "/usr/bin/expect")
-        XCTAssertEqual(invocation.arguments[0], "-c")
-        XCTAssertEqual(invocation.arguments[2], "--")
-        XCTAssertEqual(invocation.arguments[3], "secret")
+        XCTAssertTrue(invocation.arguments[0].hasPrefix(FileManager.default.temporaryDirectory.path))
+        XCTAssertEqual(invocation.arguments[1], "secret")
         XCTAssertTrue(invocation.arguments.contains("-p"))
         XCTAssertTrue(invocation.arguments.contains("2222"))
         XCTAssertTrue(invocation.arguments.contains("-i"))
