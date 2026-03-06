@@ -16,7 +16,9 @@ final class ThemeController: ObservableObject {
         self.defaults = defaults
         self.appTheme = AppTheme(rawValue: defaults.string(forKey: AppTheme.storageKey) ?? "") ?? .defaultValue
         registerAppearanceObservers()
-        applyAppearance()
+        DispatchQueue.main.async { [weak self] in
+            self?.applyAppearance()
+        }
     }
 
     func updateTheme(_ appTheme: AppTheme) {
@@ -66,9 +68,10 @@ final class ThemeController: ObservableObject {
     }
 
     private func applyAppearance() {
+        guard let app = NSApp else { return }
         let appearance = NSAppearance(named: appTheme.appearanceName)
-        NSApp.appearance = appearance
-        NSApp.windows.forEach(applyAppearance(to:))
+        app.appearance = appearance
+        app.windows.forEach(applyAppearance(to:))
     }
 
     private func applyAppearance(to window: NSWindow) {
