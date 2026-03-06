@@ -93,7 +93,7 @@ extension ServerConfig {
             hostName: "192.168.1.20",
             userName: "gpu-user",
             port: 22,
-            identityFile: "~/.ssh/id_ed25519",
+            identityFile: "/path/to/private/key",
             password: "",
             isEnabled: true,
             pollIntervalMinutes: 30

@@ -27,7 +27,7 @@ final class SSHInvocationBuilderTests: XCTestCase {
             hostName: "192.0.2.10",
             userName: "gpu-user",
             port: 2222,
-            identityFile: "~/.ssh/id_rsa",
+            identityFile: "/path/to/private/key",
             password: "secret",
             isEnabled: true,
             pollIntervalMinutes: 30
@@ -44,7 +44,7 @@ final class SSHInvocationBuilderTests: XCTestCase {
         XCTAssertTrue(invocation.arguments.contains("-p"))
         XCTAssertTrue(invocation.arguments.contains("2222"))
         XCTAssertTrue(invocation.arguments.contains("-i"))
-        XCTAssertTrue(invocation.arguments.contains("\(FileManager.default.homeDirectoryForCurrentUser.path)/.ssh/id_rsa"))
+        XCTAssertTrue(invocation.arguments.contains("/path/to/private/key"))
         XCTAssertTrue(invocation.arguments.contains("gpu-user@192.0.2.10"))
     }
 }

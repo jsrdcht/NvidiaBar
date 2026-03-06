@@ -252,7 +252,7 @@ private struct ServerEditorCard: View {
                 }
                 .frame(maxWidth: 120, alignment: .leading)
 
-                LabeledTextField(title: "Identity File", text: $config.identityFile, prompt: "~/.ssh/id_rsa", appTheme: appTheme, monospace: true)
+                LabeledTextField(title: "Identity File", text: $config.identityFile, prompt: "/path/to/private/key", appTheme: appTheme, monospace: true)
             }
 
             VStack(alignment: .leading, spacing: 6) {

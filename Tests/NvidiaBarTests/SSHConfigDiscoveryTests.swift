@@ -11,7 +11,7 @@ final class SSHConfigDiscoveryTests: XCTestCase {
             HostName 192.0.2.10
             User gpu-user
             Port 22
-            IdentityFile ~/.ssh/id_rsa
+            IdentityFile /path/to/private/key
         """
 
         let configs = SSHConfigDiscovery().parse(contents)
