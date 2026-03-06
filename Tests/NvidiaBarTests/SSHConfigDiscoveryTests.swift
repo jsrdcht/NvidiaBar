@@ -7,9 +7,9 @@ final class SSHConfigDiscoveryTests: XCTestCase {
         Host *.example
             User ignored
 
-        Host shiyanshi1 shiyanshi2
-            HostName 172.18.1.243
-            User ct
+        Host gpu-server-1 gpu-server-2
+            HostName 192.0.2.10
+            User gpu-user
             Port 22
             IdentityFile ~/.ssh/id_rsa
         """
@@ -17,10 +17,10 @@ final class SSHConfigDiscoveryTests: XCTestCase {
         let configs = SSHConfigDiscovery().parse(contents)
 
         XCTAssertEqual(configs.count, 2)
-        XCTAssertEqual(configs.map(\.hostAlias), ["shiyanshi1", "shiyanshi2"])
+        XCTAssertEqual(configs.map(\.hostAlias), ["gpu-server-1", "gpu-server-2"])
         XCTAssertEqual(configs.first?.connectionMode, .sshAlias)
-        XCTAssertEqual(configs.first?.hostName, "172.18.1.243")
-        XCTAssertEqual(configs.first?.userName, "ct")
+        XCTAssertEqual(configs.first?.hostName, "192.0.2.10")
+        XCTAssertEqual(configs.first?.userName, "gpu-user")
         XCTAssertEqual(configs.first?.port, 22)
     }
 }

@@ -176,7 +176,7 @@ private struct ServerEditorCard: View {
 
                 if config.connectionMode == .sshAlias {
                     VStack(alignment: .leading, spacing: 10) {
-                        LabeledTextField(title: "SSH 别名", text: $config.hostAlias, prompt: "例如：shiyanshi1", appTheme: appTheme, monospace: true)
+                        LabeledTextField(title: "SSH 别名", text: $config.hostAlias, prompt: "例如：gpu-server-1", appTheme: appTheme, monospace: true)
                         ImportedMetadataRow(config: config, appTheme: appTheme)
                     }
                 } else {
@@ -214,8 +214,8 @@ private struct ServerEditorCard: View {
     private var directConnectionFields: some View {
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 12) {
-                LabeledTextField(title: "主机/IP", text: $config.hostName, prompt: "例如：172.18.1.243", appTheme: appTheme, monospace: true)
-                LabeledTextField(title: "用户名", text: $config.userName, prompt: "例如：ct", appTheme: appTheme, monospace: true)
+                LabeledTextField(title: "主机/IP", text: $config.hostName, prompt: "例如：192.168.1.20", appTheme: appTheme, monospace: true)
+                LabeledTextField(title: "用户名", text: $config.userName, prompt: "例如：gpu-user", appTheme: appTheme, monospace: true)
             }
 
             HStack(spacing: 12) {
