@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var store: GPUStatusStore
+    @Binding var appTheme: AppTheme
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -16,6 +17,21 @@ struct SettingsView: View {
                 }
 
                 Spacer()
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("主题")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(.secondary)
+
+                    Picker("Theme", selection: $appTheme) {
+                        ForEach(AppTheme.allCases) { theme in
+                            Text(theme.displayName)
+                                .tag(theme)
+                        }
+                    }
+                    .pickerStyle(.segmented)
+                    .frame(width: 180)
+                }
 
                 Button("Restore Defaults") {
                     store.restoreDefaults()
