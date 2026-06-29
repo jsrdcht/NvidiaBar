@@ -14,8 +14,19 @@ final class SSHInvocationBuilderTests: XCTestCase {
         let invocation = try SSHInvocationBuilder(timeout: 12).build(for: config, remoteCommand: "nvidia-smi")
 
         XCTAssertEqual(invocation.executablePath, "/usr/bin/env")
-        XCTAssertEqual(invocation.arguments.prefix(5), ["ssh", "-o", "ConnectTimeout=12", "-o", "BatchMode=yes"])
-        XCTAssertEqual(invocation.arguments[5], "gpu-server-1")
+        XCTAssertEqual(
+            invocation.arguments.prefix(13),
+            [
+                "ssh",
+                "-o", "ConnectTimeout=12",
+                "-o", "ClearAllForwardings=yes",
+                "-o", "ServerAliveInterval=10",
+                "-o", "ServerAliveCountMax=1",
+                "-S", "none",
+                "-o", "BatchMode=yes"
+            ]
+        )
+        XCTAssertEqual(invocation.arguments[13], "gpu-server-1")
         XCTAssertEqual(invocation.arguments.last, "nvidia-smi")
     }
 
@@ -27,7 +38,7 @@ final class SSHInvocationBuilderTests: XCTestCase {
             hostName: "192.0.2.10",
             userName: "gpu-user",
             port: 2222,
-            identityFile: "/path/to/private/key",
+            identityFile: "~/.ssh/id_rsa",
             password: "secret",
             isEnabled: true,
             pollIntervalMinutes: 30
@@ -44,7 +55,9 @@ final class SSHInvocationBuilderTests: XCTestCase {
         XCTAssertTrue(invocation.arguments.contains("-p"))
         XCTAssertTrue(invocation.arguments.contains("2222"))
         XCTAssertTrue(invocation.arguments.contains("-i"))
-        XCTAssertTrue(invocation.arguments.contains("/path/to/private/key"))
+        XCTAssertTrue(invocation.arguments.contains("\(FileManager.default.homeDirectoryForCurrentUser.path)/.ssh/id_rsa"))
         XCTAssertTrue(invocation.arguments.contains("gpu-user@192.0.2.10"))
+        XCTAssertTrue(invocation.arguments.contains("-S"))
+        XCTAssertTrue(invocation.arguments.contains("none"))
     }
 }

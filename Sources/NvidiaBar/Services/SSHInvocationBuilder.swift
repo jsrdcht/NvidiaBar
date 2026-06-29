@@ -58,7 +58,11 @@ struct SSHInvocationBuilder {
         batchMode: Bool
     ) throws -> [String] {
         var arguments = [
-            "-o", "ConnectTimeout=\(Int(timeout))"
+            "-o", "ConnectTimeout=\(Int(timeout))",
+            "-o", "ClearAllForwardings=yes",
+            "-o", "ServerAliveInterval=10",
+            "-o", "ServerAliveCountMax=1",
+            "-S", "none"
         ]
 
         if batchMode {
