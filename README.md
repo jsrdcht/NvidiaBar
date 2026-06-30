@@ -4,6 +4,10 @@ NvidiaBar is a macOS menu bar app for monitoring NVIDIA GPU usage across remote 
 
 ![NvidiaBar screenshot](assets/example.png)
 
+## Changelog
+
+- Added one-click SSH port forwarding: forward a remote server port to a local port and open it in your browser.
+
 ## Open-source release model
 
 - Server configuration is local-only and stored in `UserDefaults` on each machine.

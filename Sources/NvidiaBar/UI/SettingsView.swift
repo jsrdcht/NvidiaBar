@@ -3,6 +3,7 @@ import SwiftUI
 struct SettingsView: View {
     @ObservedObject var store: GPUStatusStore
     @ObservedObject var themeController: ThemeController
+    @ObservedObject var portForwardManager: PortForwardManager
 
     private var appTheme: AppTheme {
         themeController.appTheme
@@ -21,6 +22,7 @@ struct SettingsView: View {
                             ServerEditorCard(
                                 config: binding(for: config),
                                 appTheme: appTheme,
+                                portForwardManager: portForwardManager,
                                 onDelete: {
                                     let id = config.id
                                     DispatchQueue.main.async {
@@ -150,6 +152,7 @@ struct SettingsView: View {
 private struct ServerEditorCard: View {
     @Binding var config: ServerConfig
     let appTheme: AppTheme
+    @ObservedObject var portForwardManager: PortForwardManager
     let onDelete: () -> Void
 
     var body: some View {
@@ -218,6 +221,15 @@ private struct ServerEditorCard: View {
 
                     Spacer()
                 }
+
+                Divider()
+                    .overlay(appTheme.palette.cardStroke)
+
+                PortForwardSection(
+                    config: $config,
+                    appTheme: appTheme,
+                    portForwardManager: portForwardManager
+                )
             }
         }
         .padding(18)
@@ -276,6 +288,250 @@ private struct ServerEditorCard: View {
                     )
             }
         }
+    }
+}
+
+private struct PortForwardSection: View {
+    @Binding var config: ServerConfig
+    let appTheme: AppTheme
+    @ObservedObject var portForwardManager: PortForwardManager
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("端口转发")
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .foregroundStyle(appTheme.palette.primaryText)
+
+                    Text("通过 SSH 把服务器端口转发到本机；点击“一键打开”会自动转发并在浏览器中访问。")
+                        .font(.system(size: 11, weight: .medium, design: .rounded))
+                        .foregroundStyle(appTheme.palette.tertiaryText)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                Spacer(minLength: 8)
+
+                Button("添加端口") {
+                    config.portForwards.append(PortForward())
+                }
+                .buttonStyle(SettingsActionButtonStyle(appTheme: appTheme, role: .secondary))
+            }
+
+            if config.portForwards.isEmpty {
+                Text("还没有端口转发。点击“添加端口”，填好服务器端口（例如 8384）即可一键访问。")
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(appTheme.palette.tertiaryText)
+            } else {
+                VStack(spacing: 10) {
+                    ForEach(config.portForwards) { forward in
+                        PortForwardRow(
+                            forward: binding(for: forward),
+                            config: config,
+                            appTheme: appTheme,
+                            portForwardManager: portForwardManager,
+                            onDelete: { deleteForward(id: forward.id) }
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    private func deleteForward(id: UUID) {
+        portForwardManager.stop(id)
+        config.portForwards.removeAll { $0.id == id }
+    }
+
+    private func binding(for forward: PortForward) -> Binding<PortForward> {
+        Binding(
+            get: {
+                config.portForwards.first(where: { $0.id == forward.id }) ?? forward
+            },
+            set: { updated in
+                guard let index = config.portForwards.firstIndex(where: { $0.id == updated.id }) else { return }
+                config.portForwards[index] = updated
+            }
+        )
+    }
+}
+
+private struct PortForwardRow: View {
+    @Binding var forward: PortForward
+    let config: ServerConfig
+    let appTheme: AppTheme
+    @ObservedObject var portForwardManager: PortForwardManager
+    let onDelete: () -> Void
+
+    private var runtime: PortForwardManager.Runtime? {
+        portForwardManager.runtime(for: forward.id)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            HStack(spacing: 10) {
+                LabeledTextField(title: "备注名（可选）", text: $forward.name, prompt: "例如：Jupyter", appTheme: appTheme)
+                PortNumberField(title: "服务器端口", value: $forward.remotePort, appTheme: appTheme)
+                    .frame(maxWidth: 120)
+            }
+
+            HStack(alignment: .bottom, spacing: 10) {
+                LabeledTextField(title: "服务器内地址", text: $forward.remoteHost, prompt: "127.0.0.1", appTheme: appTheme, monospace: true)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    HStack(spacing: 6) {
+                        Text("本地端口")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(appTheme.palette.secondaryText)
+
+                        Spacer()
+
+                        Toggle("随机", isOn: randomBinding)
+                            .toggleStyle(.switch)
+                            .controlSize(.mini)
+                            .labelsHidden()
+
+                        Text("随机")
+                            .font(.system(size: 10, weight: .medium, design: .rounded))
+                            .foregroundStyle(appTheme.palette.tertiaryText)
+                    }
+
+                    if forward.usesRandomLocalPort {
+                        Text("启动时自动分配")
+                            .font(.system(size: 13, weight: .medium, design: .monospaced))
+                            .foregroundStyle(appTheme.palette.tertiaryText)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 10)
+                            .background(
+                                RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                    .fill(appTheme.palette.secondaryControlFill)
+                            )
+                    } else {
+                        PortNumberField(title: nil, value: $forward.localPort, appTheme: appTheme)
+                    }
+                }
+                .frame(maxWidth: 150)
+            }
+
+            HStack(spacing: 10) {
+                statusLabel
+
+                Spacer()
+
+                actionButtons
+
+                Button("删除") {
+                    onDelete()
+                }
+                .buttonStyle(SettingsActionButtonStyle(appTheme: appTheme, role: .danger))
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .fill(appTheme.palette.cardFill.opacity(0.6))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 14, style: .continuous)
+                .stroke(appTheme.palette.cardStroke, lineWidth: 1)
+        )
+    }
+
+    private var randomBinding: Binding<Bool> {
+        Binding(
+            get: { forward.usesRandomLocalPort },
+            set: { isRandom in
+                if isRandom {
+                    forward.localPort = 0
+                } else if forward.localPort <= 0 {
+                    forward.localPort = forward.normalizedRemotePort
+                }
+            }
+        )
+    }
+
+    @ViewBuilder
+    private var statusLabel: some View {
+        if let phase = runtime?.phase {
+            switch phase {
+            case .starting:
+                Text("连接中…")
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .foregroundStyle(appTheme.palette.secondaryText)
+            case .active:
+                Text("● 127.0.0.1:\(runtime?.localPort ?? 0)")
+                    .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color(red: 0.25, green: 0.78, blue: 0.43))
+            case let .failed(message):
+                Text(message)
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundStyle(Color(red: 0.95, green: 0.42, blue: 0.38))
+                    .lineLimit(2)
+            }
+        } else {
+            Text(forward.usesRandomLocalPort ? "随机本地端口" : "本地 \(forward.fixedLocalPort ?? forward.localPort)")
+                .font(.system(size: 11, weight: .medium, design: .rounded))
+                .foregroundStyle(appTheme.palette.tertiaryText)
+        }
+    }
+
+    @ViewBuilder
+    private var actionButtons: some View {
+        switch runtime?.phase {
+        case .active?:
+            Button("打开") {
+                portForwardManager.openBrowser(port: runtime?.localPort ?? 0)
+            }
+            .buttonStyle(SettingsActionButtonStyle(appTheme: appTheme, role: .secondary))
+
+            Button("停止") {
+                portForwardManager.stop(forward.id)
+            }
+            .buttonStyle(SettingsActionButtonStyle(appTheme: appTheme, role: .secondary))
+        case .starting?:
+            Button("停止") {
+                portForwardManager.stop(forward.id)
+            }
+            .buttonStyle(SettingsActionButtonStyle(appTheme: appTheme, role: .secondary))
+        default:
+            Button("一键打开") {
+                portForwardManager.start(forward, config: config, openInBrowser: true)
+            }
+            .buttonStyle(SettingsActionButtonStyle(appTheme: appTheme, role: .primary))
+        }
+    }
+}
+
+private struct PortNumberField: View {
+    let title: String?
+    @Binding var value: Int
+    let appTheme: AppTheme
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            if let title {
+                Text(title)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(appTheme.palette.secondaryText)
+            }
+
+            TextField("端口", value: $value, format: .number.grouping(.never))
+                .textFieldStyle(.plain)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundStyle(appTheme.palette.primaryText)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .fill(appTheme.palette.secondaryControlFill)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .stroke(appTheme.palette.secondaryControlStroke, lineWidth: 1)
+                )
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

@@ -6,6 +6,7 @@ struct NvidiaBarApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
     @StateObject private var store: GPUStatusStore
     @StateObject private var themeController: ThemeController
+    @StateObject private var portForwardManager: PortForwardManager
 
     init() {
         let configStore = ServerConfigStore()
@@ -16,6 +17,7 @@ struct NvidiaBarApp: App {
         let themeController = ThemeController()
         _store = StateObject(wrappedValue: store)
         _themeController = StateObject(wrappedValue: themeController)
+        _portForwardManager = StateObject(wrappedValue: PortForwardManager())
         store.start()
     }
 
@@ -29,8 +31,12 @@ struct NvidiaBarApp: App {
         .menuBarExtraStyle(.window)
 
         Window("Settings", id: AppWindowID.settings) {
-            SettingsView(store: store, themeController: themeController)
-                .frame(minWidth: 640, minHeight: 420)
+            SettingsView(
+                store: store,
+                themeController: themeController,
+                portForwardManager: portForwardManager
+            )
+            .frame(minWidth: 640, minHeight: 420)
         }
     }
 }

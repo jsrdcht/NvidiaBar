@@ -28,6 +28,7 @@ struct ServerConfig: Codable, Identifiable, Equatable {
     var password: String
     var isEnabled: Bool
     var pollIntervalMinutes: Int
+    var portForwards: [PortForward]
 
     init(
         id: UUID = UUID(),
@@ -40,7 +41,8 @@ struct ServerConfig: Codable, Identifiable, Equatable {
         identityFile: String = "",
         password: String = "",
         isEnabled: Bool,
-        pollIntervalMinutes: Int
+        pollIntervalMinutes: Int,
+        portForwards: [PortForward] = []
     ) {
         self.id = id
         self.name = name
@@ -53,6 +55,7 @@ struct ServerConfig: Codable, Identifiable, Equatable {
         self.password = password
         self.isEnabled = isEnabled
         self.pollIntervalMinutes = pollIntervalMinutes
+        self.portForwards = portForwards
     }
 }
 
@@ -69,6 +72,7 @@ extension ServerConfig {
         case password
         case isEnabled
         case pollIntervalMinutes
+        case portForwards
     }
 
     static let defaults: [ServerConfig] = []
@@ -204,6 +208,7 @@ extension ServerConfig {
         let password = try container.decodeIfPresent(String.self, forKey: .password) ?? ""
         let isEnabled = try container.decodeIfPresent(Bool.self, forKey: .isEnabled) ?? true
         let pollIntervalMinutes = try container.decodeIfPresent(Int.self, forKey: .pollIntervalMinutes) ?? 30
+        let portForwards = try container.decodeIfPresent([PortForward].self, forKey: .portForwards) ?? []
         let inferredMode: ServerConnectionMode = hostAlias.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? .direct : .sshAlias
         let connectionMode = try container.decodeIfPresent(ServerConnectionMode.self, forKey: .connectionMode) ?? inferredMode
 
@@ -218,7 +223,8 @@ extension ServerConfig {
             identityFile: identityFile,
             password: password,
             isEnabled: isEnabled,
-            pollIntervalMinutes: pollIntervalMinutes
+            pollIntervalMinutes: pollIntervalMinutes,
+            portForwards: portForwards
         )
     }
 }
